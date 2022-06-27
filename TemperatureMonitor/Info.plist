@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict/>
+<dict>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>The app uses bluetooth to transfer data to a neighbouring device.</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>The app may frequently use bluetooth to transfer data to peers.</string>
+</dict>
 </plist>
