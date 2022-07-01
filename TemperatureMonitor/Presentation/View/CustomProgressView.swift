@@ -9,7 +9,6 @@ import UIKit
 
 class CustomProgressView: UIView {
 
-    // private lazy var baseView = UIView(frame: CGRect(x: 0, y: 0, width: self.frame.width, height: self.frame.height))
     private var backgroundLayer: CAShapeLayer?
     private var progressLayer: CAShapeLayer?
     
@@ -17,6 +16,7 @@ class CustomProgressView: UIView {
         let label = UILabel()
         label.font = .boldSystemFont(ofSize: 50)
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.alpha = 0
         return label
     }()
     
@@ -27,54 +27,72 @@ class CustomProgressView: UIView {
         return label
     }()
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        backgroundLayer?.path = configurateProgressBarPath()
+        progressLayer?.path = configurateProgressBarPath()
+    }
+    
     public func configurate() {
-        
-        //self.addSubview(baseView)
-        
         self.addSubview(valueLabel)
         setupValueLabel()
         self.addSubview(textLabel)
         setupTextLabel()
         textLabel.text = "Humidity"
-        
         let background = configurateBackgroundLayer()
         self.layer.addSublayer(background)
         backgroundLayer = background
-        
         let progress = configurateProgressLayer()
         progressLayer = progress
-        self.layer.insertSublayer(progress, above: backgroundLayer)
-        
-        self.backgroundColor = .brown
-        // baseView.backgroundColor = .cyan
+        self.layer.addSublayer(progress)
     }
     
-    public func updatePositions() {
-        backgroundLayer?.path = configurateProgressBarPath()
-        progressLayer?.path = configurateProgressBarPath()
+    public func stopLoadAnimation() {
+        progressLayer?.removeAnimation(forKey: "groupAnimation")
+        
+        UILabel.transition(
+            with: valueLabel,
+            duration: 1,
+            options: [.transitionCrossDissolve],
+            animations: { [weak self] in
+                self?.valueLabel.alpha = 1
+            },
+            completion: nil)
+    }
+    
+    public func startLoadAnimation() {
+        let strokeEndAnimation  = CABasicAnimation(keyPath: "strokeEnd")
+        strokeEndAnimation.fromValue = 0.2
+        strokeEndAnimation.toValue = 1
+        strokeEndAnimation.duration = 1.5
+        
+        let strokeStartAnimation  = CABasicAnimation(keyPath: "strokeStart")
+        strokeStartAnimation.fromValue = 0
+        strokeStartAnimation.toValue = 0.8
+        strokeStartAnimation.duration = 1.5
+        
+        let group = CAAnimationGroup()
+        
+        group.repeatCount = .infinity
+        group.duration = 2
+        
+        group.animations = [strokeStartAnimation, strokeEndAnimation]
+        
+        progressLayer?.add(group, forKey: "groupAnimation")
     }
     
     public func updateValue(value: Float) {
-        
-        // resetProgressBar()
-        // progressLayer?.removeAllAnimations()
-        
+        startLoadAnimation()
+        progressLayer?.removeAllAnimations()
         let progress = CGFloat(value / 100)
-        
-        let startValue = progressLayer?.strokeEnd ?? 0.7
-        
+        let startValue = progressLayer?.strokeEnd ?? 0
         progressLayer?.strokeEnd = progress
-        
         valueLabel.text = "\(value)%"
-        
-        /*
         let strokeEndAnimation  = CABasicAnimation(keyPath: "strokeEnd")
-        
         strokeEndAnimation.fromValue = startValue
         strokeEndAnimation.toValue = progress
-        strokeEndAnimation.duration = 0.2
+        strokeEndAnimation.duration = 1
         progressLayer?.add(strokeEndAnimation, forKey: "strokeEndAnimation")
-         */
     }
     
     private func setupValueLabel() {
@@ -109,7 +127,7 @@ class CustomProgressView: UIView {
         
         layer.path = configurateProgressBarPath()
         layer.strokeColor = UIColor.blue.cgColor
-        layer.lineWidth = 8
+        layer.lineWidth = 14
         layer.lineCap = .round
         layer.fillColor = nil
         layer.strokeEnd = 0
@@ -118,12 +136,9 @@ class CustomProgressView: UIView {
     }
     
     private func configurateProgressBarPath() -> CGPath {
-        var a = self.center
-        
-        
         return UIBezierPath(
-            arcCenter: self.center,
-            radius: self.frame.height/2,
+            arcCenter: valueLabel.center,
+            radius: self.frame.height / 2,
             startAngle: 3 * CGFloat.pi / 4,
             endAngle: CGFloat.pi / 4,
             clockwise: true).cgPath

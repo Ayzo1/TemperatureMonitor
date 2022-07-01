@@ -12,8 +12,8 @@ class TemperatureViewController: UIViewController {
     }()
     
     private lazy var progressBarView: CustomProgressView = {
-        let progressBar = CustomProgressView(frame: CGRect(x: view.frame.width/2, y: view.frame.height/2, width: 200, height: 200))
-        // progressBar.translatesAutoresizingMaskIntoConstraints = false
+        let progressBar = CustomProgressView()
+        progressBar.translatesAutoresizingMaskIntoConstraints = false
         return progressBar
     }()
     
@@ -23,33 +23,22 @@ class TemperatureViewController: UIViewController {
         self.presenter = TemperaturePresenter(view: self)
         
         view.addSubview(progressBarView)
-        // setupProgressBar()
+        setupProgressBar()
         progressBarView.configurate()
-        /*
+
         view.addSubview(temperatureLabel)
         setupTemperatureLabel()
-        view.addSubview(humidityLabel)
-        setupHumidityLabel()
-         */
-    }
-    
-    override func viewWillLayoutSubviews() {
-    }
-    
-    override func viewDidLayoutSubviews() {
-        print("aaaa")
-        progressBarView.updatePositions()
     }
     
     private func setupProgressBar() {
         progressBarView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        progressBarView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
+        progressBarView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -100).isActive = true
         progressBarView.heightAnchor.constraint(equalToConstant: 200).isActive = true
         progressBarView.widthAnchor.constraint(equalToConstant: 200).isActive = true
     }
     
     private func setupTemperatureLabel() {
-        temperatureLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 40).isActive = true
+        temperatureLabel.topAnchor.constraint(equalTo: progressBarView.bottomAnchor, constant: 0).isActive = true
         temperatureLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         temperatureLabel.heightAnchor.constraint(equalToConstant: 100).isActive = true
     }
@@ -59,18 +48,37 @@ extension TemperatureViewController: TemperatureViewProtocol {
     
     func updateValues(temperature: Float, humidity: Float) {
         DispatchQueue.main.async { [weak self] in
-            
             self?.progressBarView.updateValue(value: humidity)
-            // self?.temperatureLabel.text = String(temperature)
-            // self?.humidityLabel.text = String(humidity)
+            self?.temperatureLabel.text = "\(temperature)°C"
         }
     }
     
     func startLoad() {
-        
+        DispatchQueue.main.async { [weak self] in
+            self?.progressBarView.startLoadAnimation()
+            self?.temperatureLabel.text = "––"
+            self?.temperatureLabel.font = .boldSystemFont(ofSize: 80)
+        }
     }
     
     func endLoad() {
-        
+        DispatchQueue.main.async { [weak self] in
+            self?.progressBarView.stopLoadAnimation()
+            self?.temperatureLabel.alpha = 0
+            self?.temperatureLabel.font = .boldSystemFont(ofSize: 40)
+            
+            guard let label = self?.temperatureLabel else {
+                return
+            }
+            
+            UILabel.transition(
+                with: label,
+                duration: 1,
+                options: [.transitionCrossDissolve],
+                animations: { [weak self] in
+                    self?.temperatureLabel.alpha = 1
+                },
+                completion: nil)
+        }
     }
 }
